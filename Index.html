@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه یکپارچه استعلام اسناد | پارس هادی نور شیبان</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        :root {
+            --primary-color: #1a237e; /* سرمه‌ای تیره اداری */
+            --accent-color: #c5a059; /* طلایی */
+            --bg-color: #f4f6f8;
+            --text-color: #333;
+            --white: #ffffff;
+            --danger: #d32f2f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            font-size: 14px;
+        }
+
+        /* --- استایل‌های لودینگ --- */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: var(--accent-color);
+            text-align: center;
+        }
+
+        .loader-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-color);
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            animation: pulse 2s infinite;
+        }
+
+        .loader-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(197, 160, 89, 0.3);
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* --- استایل‌های اصلی صفحه --- */
+        #main-content {
+            display: none; /* در ابتدا مخفی */
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+
+        header {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .header-title h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-title h2 {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .header-logo img {
+            height: 60px;
+        }
+
+        /* تایمر معکوس */
+        .session-timer {
+            background: #ffebee;
+            color: var(--danger);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 1px solid #ffcdd2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* جدول داده‌ها */
+        .data-card {
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* استایل خاص برای وضعیت‌ها */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+            margin-bottom: 5px;
+        }
+
+        .detail-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border: 1px solid var(--accent-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 3px;
+        }
+
+        .detail-link:hover {
+            background-color: var(--accent-color);
+            color: var(--white);
+        }
+
+        .empty-status {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* فوتر */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 0.8rem;
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+        }
+
+        /* انیمیشن‌ها */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(197, 160, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(197, 160, 89, 0); }
+        }
+
+        /* ریسپانسیو موبایل */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .header-logo {
+                order: -1;
+            }
+
+            /* تبدیل جدول به کارت در موبایل */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            tr {
+                margin: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #fff;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+
+            td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-right: 40%;
+                text-align: left;
+            }
+
+            td:before {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                width: 35%;
+                white-space: nowrap;
+                font-weight: bold;
+                color: var(--primary-color);
+                text-align: right;
+            }
+
+            td:nth-of-type(1):before { content: "نام و نام خانوادگی"; }
+            td:nth-of-type(2):before { content: "کد ملی (شناسه)"; }
+            td:nth-of-type(3):before { content: "شماره تماس"; }
+            td:nth-of-type(4):before { content: "وضعیت پرونده ملکی"; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader-logo">
+            <img src="https://uploadkon.ir/uploads/963906_26nody-لوگوی-ثبت-اسناد-1628453673.png" alt="لوگو سازمان ثبت">
+        </div>
+        <div class="spinner"></div>
+        <div class="loading-text">در حال برقراری ارتباط با سرور مرکزی...</div>
+        <div style="font-size: 0.9rem; margin-top: 5px; color: #aaa;">لطفاً شکیبا باشید</div>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <div class="header-logo">
+                <img src="https://uploadkon.ir/uploads/963906_26nody-لوگوی-ثبت-اسناد-1628453673.png" alt="لوگو">
+            </div>
+            <div class="header-title">
+                <h1>سامانه یکپارچه استعلام اسناد و املاک</h1>
+                <h2>پارس هادی نور شیبان (سهامی خاص)</h2>
+            </div>
+            <div class="session-timer" id="timer-box">
+                زمان باقی‌مانده: <span id="time-display">90</span> ثانیه
+            </div>
+        </header>
+
+        <div class="data-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>نام و نام خانوادگی</th>
+                            <th>کد ملی (شناسه)</th>
+                            <th>شماره پرونده</th>
+                            <th>وضعیت و شرح دارایی / سوابق ثبتی</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>هادی نقوی</td>
+                            <td>0933397666</td>
+                            <td>1402/A/993</td>
+                            <td>
+                                <span class="status-badge">انتقال سند قطعی</span><br>
+                                طی ۳۰ روز گذشته دارای سابقه انتقال سند می‌باشد.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>مریم همایونی کاشانی</td>
+                            <td>0943479827</td>
+                            <td>1402/B/102</td>
+                            <td>
+                                <span class="empty-status">---</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>رضا نقوی</td>
+                            <td>0928521370</td>
+                            <td>1402/A/884</td>
+                            <td>
+                                <span class="status-badge">انتقال سند قطعی</span><br>
+                                طی ۳۰ روز گذشته دارای سابقه انتقال سند می‌باشد.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>مهدی نقوی</td>
+                            <td>0925691798</td>
+                            <td>1402/A/756</td>
+                            <td>
+                                <span class="status-badge">انتقال سند قطعی</span><br>
+                                طی ۳۰ روز گذشته دارای سابقه انتقال سند می‌باشد.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>صبا نقوی</td>
+                            <td>0929243528</td>
+                            <td>1402/C/331</td>
+                            <td>
+                                <div>
+                                    • ۴ دانگ مشاع از ۶ دانگ عرصه و اعیان (مسکونی)
+                                    <a class="detail-link" onclick="showDetail()">جزئیات</a>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    • ۶ دانگ کامل مغازه تجاری
+                                    <a class="detail-link" onclick="showDetail()">جزئیات</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>یارا نقوی</td>
+                            <td>0963113690</td>
+                            <td>1402/C/442</td>
+                            <td>
+                                <div>
+                                    • ۲ دانگ مشاع (باقیمانده) از ۶ دانگ عرصه و اعیان (مسکونی)
+                                    <a class="detail-link" onclick="showDetail()">جزئیات</a>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    • خودرو سواری (پلاک شهربانی خراسان رضوی)
+                                    <a class="detail-link" onclick="showDetail()">جزئیات</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>کلیه حقوق این سامانه محفوظ و متعلق به شرکت پارس هادی نور شیبان می‌باشد.</p>
+            <p>تاریخ بروزرسانی: ۱۴۰۳/۱۰/۱۶ | نسخه: 4.2.1</p>
+        </footer>
+    </div>
+
+    <script>
+        // تابع نمایش جزئیات (لینک‌ها)
+        function showDetail() {
+            alert("کاربر گرامی، اطلاعات تکمیلی این بخش در حال بروزرسانی و تکمیل می‌باشد.");
+        }
+
+        // منطق اصلی لودینگ و تایمر
+        document.addEventListener("DOMContentLoaded", function() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const mainContent = document.getElementById('main-content');
+            const timeDisplay = document.getElementById('time-display');
+            
+            // محاسبه زمان لودینگ رندم: بین 40,000 تا 70,000 میلی‌ثانیه (40 تا 70 ثانیه)
+            // فرمول: Math.random() * (max - min) + min
+            const loadingDuration = Math.floor(Math.random() * (70000 - 40000 + 1) + 40000);
+            
+            console.log("Loading duration set to: " + (loadingDuration/1000) + " seconds");
+
+            // اتمام لودینگ
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    
+                    // افکت فید این برای محتوا
+                    setTimeout(() => {
+                        mainContent.style.opacity = '1';
+                    }, 50);
+
+                    // شروع تایمر نشست (90 ثانیه)
+                    startSessionTimer();
+
+                }, 1000); // صبر برای انیمیشن فید اوت
+            }, loadingDuration);
+
+            // تابع تایمر نشست
+            function startSessionTimer() {
+                let timeLeft = 90; // ثانیه
+                
+                const timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timeDisplay.innerText = timeLeft;
+                    
+                    // تغییر رنگ تایمر در 10 ثانیه آخر
+                    if(timeLeft < 10) {
+                        document.getElementById('timer-box').style.backgroundColor = '#d32f2f';
+                        document.getElementById('timer-box').style.color = '#fff';
+                    }
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("زمان نشست کاربری شما به پایان رسید. جهت حفظ امنیت، از سیستم خارج می‌شوید.");
+                        
+                        // خروج از صفحه (ریلود یا سفید کردن)
+                        document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;color:#555;font-family:Vazirmatn;"><h2>نشست پایان یافت</h2></div>';
+                        // window.close(); // معمولا مرورگرها اجازه بستن تب با اسکریپت را نمی‌دهند مگر اینکه اسکریپت آن را باز کرده باشد
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
